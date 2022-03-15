@@ -24,7 +24,8 @@
             <h6 class="m-0 font-weight-bold text-primary">Media</h6>
           </div>
           <div class="card-body border">
-            <vue-dropzone ref="myVueDropzone" id="dropzone" :options="dropzoneOptions"></vue-dropzone>
+            <vue-dropzone ref="myVueDropzone" v-on:vdropzone-success="changeImage()" id="dropzone"
+                          :options="dropzoneOptions"></vue-dropzone>
           </div>
         </div>
       </div>
@@ -147,7 +148,9 @@ export default {
         tags: []
       })
     },
-
+    changeImage(file, suc) {
+      console.log(e)
+    },
     // check the variant and render all the combination
     checkVariant() {
       let tags = [];
@@ -177,7 +180,21 @@ export default {
       }, []);
       return ans;
     },
-
+    getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          // Does this cookie string begin with the name we want?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    },
     // store product into database
     saveProduct() {
       let product = {
@@ -188,10 +205,39 @@ export default {
         product_variant: this.product_variant,
         product_variant_prices: this.product_variant_prices
       }
+      let formdata = new FormData()
+      formdata.append("title", this.product_name)
+      formdata.append("sku", this.product_sku)
+      formdata.append("description", this.description)
+      formdata.append("product_variant_prices", JSON.stringify(this.product_variant_prices))
+      formdata.append("product_variant", JSON.stringify(this.product_variant))
+      // for (let i = 0; i < this.product_variant_prices.length; i++) {
+      //   formdata.append("product_variant_prices", this.product_variant_prices[i])
+      // }
+      console.log(this.$refs.myVueDropzone)
+      for (let i = 0; i < this.$refs.myVueDropzone.dropzone.files.length; i++) {
+        formdata.append("product_image", this.$refs.myVueDropzone.dropzone.files[i])
+      }
 
+      //
+      let config = {
+        headers: {
+          'X-CSRFToken': this.getCookie('csrftoken'),
+        }
+      }
+      axios.post('/product/api/product/create/', formdata, config).then(response => {
+        this.product_name = ''
+        this.product_sku = ''
+        this.description = ''
+        this.images = []
+        this.product_variant_prices = []
+        this.product_variant = [
+          {
+            option: this.variants[0].id,
+            tags: []
+          }
+        ]
 
-      axios.post('/product', product).then(response => {
-        console.log(response.data);
       }).catch(error => {
         console.log(error);
       })

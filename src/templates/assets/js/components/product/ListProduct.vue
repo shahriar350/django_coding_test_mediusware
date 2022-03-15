@@ -3,15 +3,17 @@
     <div>
 
       <div class="card">
-        <form action="" method="get" class="card-header">
+        <form @submit.prevent="searchBar" class="card-header">
           <div class="form-row justify-content-between">
             <div class="col-md-2">
-              <input type="text" name="title" placeholder="Product Title" class="form-control">
+              <input v-model="search.title" type="text" name="title" placeholder="Product Title" class="form-control">
             </div>
             <div class="col-md-2">
-              <select name="variant" id="" class="form-control">
+              <select v-model="search.variant" name="variant" id="" class="form-control">
                 <option selected disabled>--Select A Variant--</option>
-
+                <option :value="variant.id" v-for="(variant,index) in variants" :key="index">
+                  {{ variant.title }}
+                </option>
               </select>
             </div>
 
@@ -20,13 +22,15 @@
                 <div class="input-group-prepend">
                   <span class="input-group-text">Price Range</span>
                 </div>
-                <input type="text" name="price_from" aria-label="First name" placeholder="From"
+                <input type="text" name="price_from" v-model="search.price_start" aria-label="First name"
+                       placeholder="From"
                        class="form-control">
-                <input type="text" name="price_to" aria-label="Last name" placeholder="To" class="form-control">
+                <input type="text" name="price_to" v-model="search.price_end" aria-label="Last name" placeholder="To"
+                       class="form-control">
               </div>
             </div>
             <div class="col-md-2">
-              <input type="date" name="date" placeholder="Date" class="form-control">
+              <input type="date" v-model="search.created_date" name="date" placeholder="Date" class="form-control">
             </div>
             <div class="col-md-1">
               <button type="submit" class="btn btn-primary float-right"><i class="fa fa-search"></i></button>
@@ -140,13 +144,53 @@ export default {
   data() {
     return {
       products: [],
+      variants: [],
+      search: {
+        title: '',
+        variant: '',
+        price_start: '',
+        price_end: '',
+        created_date: '',
+      }
     }
   },
 
   created() {
     this.get_product_list();
+    this.get_variant_list();
+    this.getCookie('csrftoken');
   },
+
   methods: {
+    getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          // Does this cookie string begin with the name we want?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    },
+    searchBar() {
+      // this.$http.post("/product/api/product/search/", this.search)
+      this.$http.get(`/product/api/product/search/?title=${this.search.title}&variant=${this.search.variant}&price_start=${this.search.price_start}&price_end=${this.search.price_end}&created_date=${this.search.created_date}`)
+          .then(res => {
+            this.products = res.data
+          })
+
+    },
+    get_variant_list() {
+      this.$http.get('/product/api/variant/list/')
+          .then(res => {
+            this.variants = res.data
+          })
+    },
     get_product_list(id) {
       if (id === undefined) {
         id = 1
