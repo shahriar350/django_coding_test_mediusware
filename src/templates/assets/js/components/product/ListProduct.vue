@@ -85,7 +85,6 @@
                         <dd class="col-sm-8 pb-0">InStock : {{ price.stock }}.</dd>
                       </dl>
                     </dd>
-
                   </dl>
                   </span>
 
@@ -94,7 +93,7 @@
                 </td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <a href="" class="btn btn-success">Edit</a>
+                    <a :href="`/product/edit/${product.id}/`" class="btn btn-success">Edit</a>
                   </div>
                 </td>
               </tr>
